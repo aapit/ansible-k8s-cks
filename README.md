@@ -1,4 +1,4 @@
-# ansible-k8s-cks
+# Ansible Kubernetes CKS Practice Cluster for Mac
 
 Ansible provisioning for the **CKS practice cluster** running on Multipass VMs
 (Mac / Apple Silicon). It reproduces the existing, hand-built setup: a kubeadm
