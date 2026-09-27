@@ -15,21 +15,31 @@
     state: directory
     mode: "0755"
 
+- name: Check for an existing containerd config
+  ansible.builtin.stat:
+    path: /etc/containerd/config.toml
+  register: containerd_config
+
+# Only lay down a fresh default config when there isn't one already. This keeps
+# a run against an EXISTING node from overwriting its config (and bouncing all
+# its containers). SystemdCgroup is then enforced idempotently below.
 - name: Generate default containerd config
   ansible.builtin.command: containerd config default
   register: containerd_default_config
   changed_when: false
+  when: not containerd_config.stat.exists
 
-- name: Write containerd config
+- name: Write default containerd config (fresh nodes only)
   ansible.builtin.copy:
     content: "{{ containerd_default_config.stdout }}"
     dest: /etc/containerd/config.toml
     owner: root
     group: root
     mode: "0644"
+  when: not containerd_config.stat.exists
   notify: Restart containerd
 
-- name: Enable SystemdCgroup (containerd 2.x / config v3 layout)
+- name: Enable SystemdCgroup (idempotent; only changes if currently false)
   ansible.builtin.replace:
     path: /etc/containerd/config.toml
     regexp: 'SystemdCgroup = false'

@@ -18,10 +18,14 @@ service_subnet: "10.96.0.0/12"
 dns_domain: "cluster.local"
 image_repository: "registry.k8s.io"
 
-# Node IP / apiserver advertise address = the address ansible connects on.
+# Node IP / apiserver advertise address.
+# Defaults to the address ansible connects on (correct for a FRESH cluster where
+# the primary Multipass network is used for everything). For an EXISTING cluster
+# whose nodes advertise on a different network, override node_ip per host in the
+# inventory so this playbook does NOT rewrite the running kubelet's --node-ip.
 node_ip: "{{ ansible_host }}"
-# The control-plane endpoint workers join against.
-control_plane_ip: "{{ hostvars[groups['control_plane'][0]]['ansible_host'] }}"
+# The control-plane endpoint workers join against (uses the CP's node_ip).
+control_plane_ip: "{{ hostvars[groups['control_plane'][0]]['node_ip'] }}"
 control_plane_port: 6443
 
 # --- containerd ---------------------------------------------------------------

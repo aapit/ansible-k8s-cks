@@ -3,7 +3,7 @@
 - name: Deploy Kyverno
   kubernetes.core.helm:
     name: kyverno
-    chart_ref: kyverno/kyverno
+    chart_ref: kyverno
     chart_repo_url: https://kyverno.github.io/kyverno/
     chart_version: "{{ kyverno_chart_version }}"
     release_namespace: kyverno

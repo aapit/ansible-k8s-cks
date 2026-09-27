@@ -66,27 +66,32 @@
     cache_valid_time: 3600
 
 # --- helm (for the add-on roles) --------------------------------------------
-- name: Check helm presence
-  ansible.builtin.stat:
-    path: "{{ helm_bin }}"
-  register: helm_stat
+# Reuse any helm already on the node (e.g. the snap install on the existing
+# cluster); only download one when none is found.
+- name: Locate an existing helm
+  ansible.builtin.command: bash -lc "command -v helm || true"
+  register: helm_which
+  changed_when: false
+  check_mode: false
 
-- name: Download helm
+- name: Use the existing helm for the add-on roles
+  ansible.builtin.set_fact:
+    helm_bin: "{{ helm_which.stdout }}"
+  when: helm_which.stdout | length > 0
+
+- name: Install helm (only when none is present)
   ansible.builtin.unarchive:
     src: "https://get.helm.sh/helm-{{ helm_version }}-linux-{{ arch }}.tar.gz"
-    dest: /tmp
+    dest: /usr/local/bin
     remote_src: true
-  when: not helm_stat.stat.exists
-
-- name: Install helm binary
-  ansible.builtin.copy:
-    src: "/tmp/linux-{{ arch }}/helm"
-    dest: "{{ helm_bin }}"
-    remote_src: true
+    extra_opts:
+      - --strip-components=1
+      - "linux-{{ arch }}/helm"
+    creates: /usr/local/bin/helm
     owner: root
     group: root
     mode: "0755"
-  when: not helm_stat.stat.exists
+  when: helm_which.stdout | length == 0
 
 # --- join command for the workers -------------------------------------------
 # no_log: the join command embeds a bootstrap token + CA cert hash; keep it out

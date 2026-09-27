@@ -5,7 +5,7 @@
 - name: Deploy Cilium
   kubernetes.core.helm:
     name: cilium
-    chart_ref: cilium/cilium
+    chart_ref: cilium
     chart_repo_url: https://helm.cilium.io/
     chart_version: "{{ cilium_chart_version }}"
     release_namespace: kube-system
@@ -16,16 +16,8 @@
     wait_timeout: 10m
 
 - name: Wait for all nodes to become Ready
-  kubernetes.core.k8s_info:
-    kind: Node
-    kubeconfig: /etc/kubernetes/admin.conf
-  register: node_info
-  until: >
-    node_info.resources | length > 0 and
-    (node_info.resources
-      | map(attribute='status.conditions')
-      | map('selectattr', 'type', 'eq', 'Ready')
-      | map('map', attribute='status')
-      | map('first') | list | unique) == ['True']
-  retries: 30
-  delay: 10
+  ansible.builtin.command: >
+    kubectl --kubeconfig /etc/kubernetes/admin.conf
+    wait --for=condition=Ready nodes --all --timeout=300s
+  changed_when: false
+  check_mode: false

@@ -61,13 +61,35 @@ The existing hand-built cluster deliberately advertises on a **secondary** netwo
 simply uses the primary `192.168.252.x` network for both SSH and the k8s
 node-ip/apiserver — that works out of the box.
 
-## Running against the EXISTING cluster? Caution
+## Running against the EXISTING cluster
 
-This playbook is meant to build a **fresh** cluster. Do not point it at the running
-cp1/worker1 as-is: the node-ip (`192.168.74.x`) and some manual tweaks differ, so a
-run would try to "converge" (among other things, change the kubelet node-ip) and
-could disrupt the live cluster. For the existing cluster: first `make reset` (or
-`make down` + `make up`) and then provision cleanly.
+The playbook is idempotent and is wired to run non-disruptively against the
+existing hand-built cp1/worker1:
+
+- **node-ip** is pinned per host in `inventory/hosts.yml` (`node_ip: 192.168.74.x`),
+  so the playbook does **not** rewrite the running kubelet's `--node-ip`.
+- **containerd** config is only generated on fresh nodes; on an existing node it
+  just enforces `SystemdCgroup = true` (a no-op if already set), so containers are
+  not bounced.
+- `kubeadm init`/`join` are skipped when the node is already bootstrapped.
+
+Steps:
+
+```bash
+make deps
+SSH_PUBKEY=~/.ssh/id_rsa.pub ./scripts/authorize-key.sh   # let Ansible in via SSH
+# set ansible_ssh_private_key_file in hosts.yml to the matching private key
+make ping
+ansible-playbook playbooks/site.yml --check --diff          # dry-run first!
+make site
+```
+
+> Run `--check --diff` first and confirm the changes are benign. Expected
+> non-zero-but-harmless diffs: the sysctl drop-in file being written, and the Falco
+> local-rules text (this repo ships an English version; the live cluster has the
+> original Dutch text — functionally identical).
+
+To instead rebuild from scratch: `make down` + `make up` (or `make reset`).
 
 ## Other commands
 

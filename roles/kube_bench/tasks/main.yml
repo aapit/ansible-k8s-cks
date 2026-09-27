@@ -5,16 +5,10 @@
   register: kube_bench_check
   changed_when: false
   failed_when: false
+  check_mode: false
 
-- name: Download kube-bench .deb
-  ansible.builtin.get_url:
-    url: "https://github.com/aquasecurity/kube-bench/releases/download/{{ kube_bench_version }}/kube-bench_{{ kube_bench_version | regex_replace('^v', '') }}_linux_{{ arch }}.deb"
-    dest: "/tmp/kube-bench_{{ kube_bench_version }}.deb"
-    mode: "0644"
-  when: kube_bench_version | regex_replace('^v', '') not in kube_bench_check.stdout
-
-- name: Install kube-bench
+# apt downloads the .deb itself when given a URL (no /tmp handling needed).
+- name: Install kube-bench from the upstream .deb
   ansible.builtin.apt:
-    deb: "/tmp/kube-bench_{{ kube_bench_version }}.deb"
-    state: present
+    deb: "https://github.com/aquasecurity/kube-bench/releases/download/{{ kube_bench_version }}/kube-bench_{{ kube_bench_version | regex_replace('^v', '') }}_linux_{{ arch }}.deb"
   when: kube_bench_version | regex_replace('^v', '') not in kube_bench_check.stdout

@@ -80,9 +80,14 @@
     - enable_gvisor | default(false)
 
 - name: Add gVisor apt repository
-  ansible.builtin.apt_repository:
-    repo: "deb [arch={{ arch_deb }} signed-by=/usr/share/keyrings/gvisor-archive-keyring.gpg] https://storage.googleapis.com/gvisor/releases release main"
-    filename: gvisor
+  ansible.builtin.deb822_repository:
+    name: gvisor
+    types: [deb]
+    uris: https://storage.googleapis.com/gvisor/releases
+    suites: [release]
+    components: [main]
+    architectures: ["{{ arch_deb }}"]
+    signed_by: /usr/share/keyrings/gvisor-archive-keyring.gpg
     state: present
   when:
     - node_role == 'worker'

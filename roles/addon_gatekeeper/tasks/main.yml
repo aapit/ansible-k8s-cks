@@ -3,7 +3,7 @@
 - name: Deploy Gatekeeper
   kubernetes.core.helm:
     name: gatekeeper
-    chart_ref: gatekeeper/gatekeeper
+    chart_ref: gatekeeper
     chart_repo_url: https://open-policy-agent.github.io/gatekeeper/charts
     chart_version: "{{ gatekeeper_chart_version }}"
     release_namespace: gatekeeper-system

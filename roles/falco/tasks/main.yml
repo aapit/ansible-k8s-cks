@@ -9,9 +9,13 @@
     force: false
 
 - name: Add Falco apt repository
-  ansible.builtin.apt_repository:
-    repo: "deb [signed-by=/usr/share/keyrings/falco-archive-keyring.gpg] {{ falco_repo_url }} stable main"
-    filename: falcosecurity
+  ansible.builtin.deb822_repository:
+    name: falcosecurity
+    types: [deb]
+    uris: "{{ falco_repo_url }}"
+    suites: [stable]
+    components: [main]
+    signed_by: /usr/share/keyrings/falco-archive-keyring.gpg
     state: present
 
 - name: Pre-seed falco debconf so it installs unattended with the modern eBPF driver

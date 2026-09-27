@@ -3,22 +3,12 @@
 # Requires the Gateway API CRDs to be installed first. Matches: service.type=NodePort.
 
 - name: Install Gateway API CRDs
-  kubernetes.core.k8s:
-    kubeconfig: /etc/kubernetes/admin.conf
-    state: present
-    src: "https://github.com/kubernetes-sigs/gateway-api/releases/download/{{ gateway_api_version }}/standard-install.yaml"
-  # k8s module cannot read a remote URL directly; fall back to kubectl for the URL apply.
-  ignore_errors: true
-  register: gwapi_crd_module
-
-- name: Install Gateway API CRDs (kubectl fallback for URL apply)
   ansible.builtin.command:
     cmd: "kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/{{ gateway_api_version }}/standard-install.yaml"
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf
-  when: gwapi_crd_module is failed
-  register: gwapi_crd_kubectl
-  changed_when: "'created' in gwapi_crd_kubectl.stdout or 'configured' in gwapi_crd_kubectl.stdout"
+  register: gwapi_crd
+  changed_when: "'created' in gwapi_crd.stdout or 'configured' in gwapi_crd.stdout"
 
 - name: Deploy NGINX Gateway Fabric
   kubernetes.core.helm:
