@@ -1,0 +1,15 @@
+*.retry
+.venv/
+__pycache__/
+*.log
+
+# Never commit cluster credentials if they ever get fetched to this tree
+**/admin.conf
+**/*.kubeconfig
+**/.kube/
+kubeconfig
+*.pem
+id_rsa
+id_ed25519
+*.key
+!**/keyrings/*.gpg

@@ -1,0 +1,67 @@
+---
+# ============================================================================
+# Central configuration for the CKS practice cluster.
+# Mirrors the versions discovered on the existing cp1/worker1 (2026-09-27).
+# Target arch is arm64 (Apple Silicon Mac) — all binary downloads use aarch64.
+# ============================================================================
+
+arch: arm64            # kubernetes/helm/cli download arch (arm64 on Apple Silicon)
+arch_deb: arm64        # dpkg architecture
+arch_alt: aarch64      # some projects use this spelling (falco, cilium tarballs)
+
+# --- Kubernetes ---------------------------------------------------------------
+kubernetes_version: "1.35.6-1.1"        # apt package version (kubeadm/kubelet/kubectl)
+kubernetes_minor: "v1.35"               # pkgs.k8s.io repo channel
+kubernetes_semver: "v1.35.6"            # kubeadm ClusterConfiguration kubernetesVersion
+pod_subnet: "10.244.0.0/16"
+service_subnet: "10.96.0.0/12"
+dns_domain: "cluster.local"
+image_repository: "registry.k8s.io"
+
+# Node IP / apiserver advertise address = the address ansible connects on.
+node_ip: "{{ ansible_host }}"
+# The control-plane endpoint workers join against.
+control_plane_ip: "{{ hostvars[groups['control_plane'][0]]['ansible_host'] }}"
+control_plane_port: 6443
+
+# --- containerd ---------------------------------------------------------------
+# Uses the Ubuntu-packaged containerd 2.x (config version 3), SystemdCgroup=true.
+containerd_package: "containerd"
+
+# --- helm ---------------------------------------------------------------------
+helm_version: "v3.16.4"                 # installed to /usr/local/bin for automation
+helm_bin: "/usr/local/bin/helm"
+
+# --- CNI: Cilium --------------------------------------------------------------
+cilium_chart_version: "1.20.1"
+cilium_cli_version: "v0.16.24"
+cilium_values:
+  ipam:
+    mode: kubernetes
+  hubble:
+    relay:
+      enabled: true
+    ui:
+      enabled: true
+
+# --- Add-ons (helm) -----------------------------------------------------------
+gatekeeper_chart_version: "3.23.1"
+kyverno_chart_version: "3.9.0"
+ingress_nginx_chart_version: "4.15.1"
+nginx_gateway_chart_version: "2.6.7"
+gateway_api_version: "v1.2.1"           # Gateway API CRDs required by NGF
+
+# --- Security tooling ---------------------------------------------------------
+kube_bench_version: "v0.16.0"
+conftest_version: "0.56.0"
+falco_repo_url: "https://download.falco.org/packages/deb"
+
+# Toggle add-ons / tooling on or off.
+enable_hubble: true
+enable_gatekeeper: true
+enable_kyverno: true
+enable_ingress_nginx: true
+enable_nginx_gateway: true
+enable_falco: true
+enable_kube_bench: true
+enable_gvisor: true          # runsc on workers

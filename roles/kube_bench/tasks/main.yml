@@ -1,0 +1,20 @@
+---
+# kube-bench (CIS Kubernetes Benchmark) installed from the upstream .deb. cp only.
+- name: Check kube-bench presence
+  ansible.builtin.command: kube-bench version
+  register: kube_bench_check
+  changed_when: false
+  failed_when: false
+
+- name: Download kube-bench .deb
+  ansible.builtin.get_url:
+    url: "https://github.com/aquasecurity/kube-bench/releases/download/{{ kube_bench_version }}/kube-bench_{{ kube_bench_version | regex_replace('^v', '') }}_linux_{{ arch }}.deb"
+    dest: "/tmp/kube-bench_{{ kube_bench_version }}.deb"
+    mode: "0644"
+  when: kube_bench_version | regex_replace('^v', '') not in kube_bench_check.stdout
+
+- name: Install kube-bench
+  ansible.builtin.apt:
+    deb: "/tmp/kube-bench_{{ kube_bench_version }}.deb"
+    state: present
+  when: kube_bench_version | regex_replace('^v', '') not in kube_bench_check.stdout

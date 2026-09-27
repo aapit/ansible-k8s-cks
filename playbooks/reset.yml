@@ -1,0 +1,35 @@
+---
+# Tears the cluster back down to bare nodes (kubeadm reset).
+# Run from the Mac:  ansible-playbook playbooks/reset.yml
+# The VMs themselves are left running — use `make down` to delete them.
+
+- name: kubeadm reset all nodes
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: kubeadm reset
+      ansible.builtin.command:
+        cmd: kubeadm reset -f
+      register: reset_out
+      changed_when: reset_out.rc == 0
+      failed_when: false
+
+    - name: Remove cluster state
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/cni/net.d
+        - /etc/kubernetes
+        - /var/lib/etcd
+        - "/home/{{ ansible_user }}/.kube"
+        - /root/.kube
+
+    - name: Flush iptables left behind by kube-proxy / CNI
+      ansible.builtin.shell: |
+        iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X
+      args:
+        executable: /bin/bash
+      changed_when: true
+      failed_when: false

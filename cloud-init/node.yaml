@@ -1,0 +1,11 @@
+#cloud-config
+# Minimal cloud-init used by scripts/multipass-up.sh.
+# The SSH public key is injected by the script (SSH_PUBKEY) so Ansible can
+# reach the VM as the default `ubuntu` user over SSH.
+users:
+  - name: ubuntu
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - __SSH_PUBKEY__
+package_update: true

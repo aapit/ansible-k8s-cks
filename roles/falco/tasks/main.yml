@@ -1,0 +1,47 @@
+---
+# Installs Falco (modern eBPF driver) with the custom local rules. Worker nodes.
+
+- name: Add Falco apt signing key
+  ansible.builtin.get_url:
+    url: https://falco.org/repo/falcosecurity-packages.asc
+    dest: /usr/share/keyrings/falco-archive-keyring.gpg
+    mode: "0644"
+    force: false
+
+- name: Add Falco apt repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/falco-archive-keyring.gpg] {{ falco_repo_url }} stable main"
+    filename: falcosecurity
+    state: present
+
+- name: Pre-seed falco debconf so it installs unattended with the modern eBPF driver
+  ansible.builtin.debconf:
+    name: falco
+    question: "{{ item.q }}"
+    vtype: "{{ item.t }}"
+    value: "{{ item.v }}"
+  loop:
+    - { q: "falco/driver_choice", t: "select", v: "Modern eBPF" }
+    - { q: "falco/unattended_install", t: "boolean", v: "true" }
+
+- name: Install Falco
+  ansible.builtin.apt:
+    name: falco
+    state: present
+    update_cache: true
+
+- name: Deploy custom local rules
+  ansible.builtin.template:
+    src: falco_rules.local.yaml
+    dest: /etc/falco/falco_rules.local.yaml
+    owner: root
+    group: root
+    mode: "0644"
+    validate: "falco --validate %s"
+  notify: Restart falco
+
+- name: Enable and start the modern-eBPF Falco service
+  ansible.builtin.systemd:
+    name: falco-modern-bpf.service
+    enabled: true
+    state: started

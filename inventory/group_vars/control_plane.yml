@@ -1,0 +1,10 @@
+---
+node_role: control-plane
+# Extra tooling installed on the control plane (matches cp1).
+cp_apt_packages:
+  - etcd-client
+  - jq
+  - sysdig
+install_docker_snap: true      # docker CLI/daemon via snap (image builds)
+install_conftest: true         # OPA conftest for policy testing
+install_cilium_cli: true

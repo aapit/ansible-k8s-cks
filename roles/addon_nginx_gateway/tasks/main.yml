@@ -1,0 +1,36 @@
+---
+# NGINX Gateway Fabric (Gateway API implementation) via its OCI helm chart.
+# Requires the Gateway API CRDs to be installed first. Matches: service.type=NodePort.
+
+- name: Install Gateway API CRDs
+  kubernetes.core.k8s:
+    kubeconfig: /etc/kubernetes/admin.conf
+    state: present
+    src: "https://github.com/kubernetes-sigs/gateway-api/releases/download/{{ gateway_api_version }}/standard-install.yaml"
+  # k8s module cannot read a remote URL directly; fall back to kubectl for the URL apply.
+  ignore_errors: true
+  register: gwapi_crd_module
+
+- name: Install Gateway API CRDs (kubectl fallback for URL apply)
+  ansible.builtin.command:
+    cmd: "kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/{{ gateway_api_version }}/standard-install.yaml"
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  when: gwapi_crd_module is failed
+  register: gwapi_crd_kubectl
+  changed_when: "'created' in gwapi_crd_kubectl.stdout or 'configured' in gwapi_crd_kubectl.stdout"
+
+- name: Deploy NGINX Gateway Fabric
+  kubernetes.core.helm:
+    name: ngf
+    chart_ref: "oci://ghcr.io/nginx/charts/nginx-gateway-fabric"
+    chart_version: "{{ nginx_gateway_chart_version }}"
+    release_namespace: nginx-gateway
+    create_namespace: true
+    binary_path: "{{ helm_bin }}"
+    kubeconfig: /etc/kubernetes/admin.conf
+    values:
+      service:
+        type: NodePort
+    wait: true
+    wait_timeout: 10m

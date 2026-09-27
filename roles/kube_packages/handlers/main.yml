@@ -1,0 +1,9 @@
+---
+- name: Restart kubelet
+  ansible.builtin.systemd:
+    name: kubelet
+    state: restarted
+    daemon_reload: true
+  # kubelet only stays up once the node is bootstrapped; ignore failures on
+  # a not-yet-joined node.
+  failed_when: false

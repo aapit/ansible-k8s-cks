@@ -1,0 +1,22 @@
+---
+# Joins the node to the cluster using the join command produced by the
+# control_plane role. Idempotent: skips if kubelet is already configured.
+
+- name: Check whether this node already joined
+  ansible.builtin.stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: kubelet_conf
+
+- name: Fetch join command from the control plane
+  ansible.builtin.set_fact:
+    join_command: "{{ hostvars[groups['control_plane'][0]]['kubeadm_join_command'] }}"
+  when: not kubelet_conf.stat.exists
+  no_log: true
+
+- name: Join the cluster
+  ansible.builtin.command:
+    cmd: "{{ join_command }} --cri-socket unix:///run/containerd/containerd.sock"
+  when: not kubelet_conf.stat.exists
+  register: kubeadm_join
+  changed_when: kubeadm_join.rc == 0
+  no_log: true

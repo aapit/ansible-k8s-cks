@@ -1,0 +1,6 @@
+---
+node_role: worker
+# Extra tooling installed on workers (matches worker1).
+worker_apt_packages:
+  - dkms
+  - make

@@ -1,0 +1,58 @@
+---
+# Full provisioning of the CKS practice cluster.
+# Run from the Mac:  ansible-playbook playbooks/site.yml
+
+- name: Node preparation (all nodes)
+  hosts: all
+  become: true
+  gather_facts: true
+  roles:
+    - common
+    - containerd
+    - kube_packages
+
+- name: Bootstrap the control plane
+  hosts: control_plane
+  become: true
+  gather_facts: true
+  roles:
+    - control_plane
+
+- name: Join the workers
+  hosts: workers
+  become: true
+  gather_facts: true
+  roles:
+    - worker
+
+- name: CNI and cluster add-ons (from the control plane)
+  hosts: control_plane
+  become: true
+  gather_facts: true
+  roles:
+    - cni_cilium
+    - role: addon_gatekeeper
+      when: enable_gatekeeper | default(true)
+    - role: addon_kyverno
+      when: enable_kyverno | default(true)
+    - role: addon_ingress_nginx
+      when: enable_ingress_nginx | default(true)
+    - role: addon_nginx_gateway
+      when: enable_nginx_gateway | default(true)
+    - role: kube_bench
+      when: enable_kube_bench | default(true)
+
+- name: Worker runtime security
+  hosts: workers
+  become: true
+  gather_facts: true
+  roles:
+    - role: falco
+      when: enable_falco | default(true)
+
+- name: Extra CKS tooling (all nodes)
+  hosts: all
+  become: true
+  gather_facts: true
+  roles:
+    - security_tools

@@ -1,0 +1,18 @@
+---
+# ingress-nginx via helm. Matches: controller.service.type=NodePort.
+- name: Deploy ingress-nginx
+  kubernetes.core.helm:
+    name: ingress-nginx
+    chart_ref: ingress-nginx/ingress-nginx
+    chart_repo_url: https://kubernetes.github.io/ingress-nginx
+    chart_version: "{{ ingress_nginx_chart_version }}"
+    release_namespace: ingress-nginx
+    create_namespace: true
+    binary_path: "{{ helm_bin }}"
+    kubeconfig: /etc/kubernetes/admin.conf
+    values:
+      controller:
+        service:
+          type: NodePort
+    wait: true
+    wait_timeout: 10m

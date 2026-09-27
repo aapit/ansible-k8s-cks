@@ -1,0 +1,98 @@
+---
+# CKS-flavoured extra tooling. Split by node role.
+
+# ------------------------- control plane ------------------------------------
+- name: Install control-plane apt tooling
+  ansible.builtin.apt:
+    name: "{{ cp_apt_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  when: node_role == 'control-plane'
+
+- name: Install docker via snap
+  community.general.snap:
+    name: docker
+  when:
+    - node_role == 'control-plane'
+    - install_docker_snap | default(false)
+
+- name: Check cilium-cli presence
+  ansible.builtin.stat:
+    path: /usr/local/bin/cilium
+  register: cilium_cli_stat
+  when: node_role == 'control-plane'
+
+- name: Install cilium-cli
+  ansible.builtin.unarchive:
+    src: "https://github.com/cilium/cilium-cli/releases/download/{{ cilium_cli_version }}/cilium-linux-{{ arch }}.tar.gz"
+    dest: /usr/local/bin
+    remote_src: true
+    mode: "0755"
+  when:
+    - node_role == 'control-plane'
+    - install_cilium_cli | default(false)
+    - not cilium_cli_stat.stat.exists
+
+- name: Check conftest presence
+  ansible.builtin.stat:
+    path: /usr/local/bin/conftest
+  register: conftest_stat
+  when: node_role == 'control-plane'
+
+- name: Install conftest
+  ansible.builtin.unarchive:
+    src: "https://github.com/open-policy-agent/conftest/releases/download/v{{ conftest_version }}/conftest_{{ conftest_version }}_Linux_{{ arch }}.tar.gz"
+    dest: /usr/local/bin
+    remote_src: true
+    include:
+      - conftest
+    mode: "0755"
+  when:
+    - node_role == 'control-plane'
+    - install_conftest | default(false)
+    - not conftest_stat.stat.exists
+
+# ------------------------- workers ------------------------------------------
+- name: Install worker apt tooling
+  ansible.builtin.apt:
+    name: "{{ worker_apt_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  when: node_role == 'worker'
+
+- name: Add gVisor apt signing key
+  ansible.builtin.get_url:
+    url: https://gvisor.dev/archive.key
+    dest: /tmp/gvisor.key
+    mode: "0644"
+  when:
+    - node_role == 'worker'
+    - enable_gvisor | default(false)
+
+- name: Dearmor gVisor key
+  ansible.builtin.command:
+    cmd: gpg --dearmor --yes -o /usr/share/keyrings/gvisor-archive-keyring.gpg /tmp/gvisor.key
+    creates: /usr/share/keyrings/gvisor-archive-keyring.gpg
+  when:
+    - node_role == 'worker'
+    - enable_gvisor | default(false)
+
+- name: Add gVisor apt repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch={{ arch_deb }} signed-by=/usr/share/keyrings/gvisor-archive-keyring.gpg] https://storage.googleapis.com/gvisor/releases release main"
+    filename: gvisor
+    state: present
+  when:
+    - node_role == 'worker'
+    - enable_gvisor | default(false)
+
+- name: Install runsc (gVisor)
+  ansible.builtin.apt:
+    name: runsc
+    state: present
+    update_cache: true
+  when:
+    - node_role == 'worker'
+    - enable_gvisor | default(false)

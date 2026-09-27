@@ -1,0 +1,16 @@
+---
+# OPA Gatekeeper (admission policy) via helm. Matches: replicas=1.
+- name: Deploy Gatekeeper
+  kubernetes.core.helm:
+    name: gatekeeper
+    chart_ref: gatekeeper/gatekeeper
+    chart_repo_url: https://open-policy-agent.github.io/gatekeeper/charts
+    chart_version: "{{ gatekeeper_chart_version }}"
+    release_namespace: gatekeeper-system
+    create_namespace: true
+    binary_path: "{{ helm_bin }}"
+    kubeconfig: /etc/kubernetes/admin.conf
+    values:
+      replicas: 1
+    wait: true
+    wait_timeout: 10m
