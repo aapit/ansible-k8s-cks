@@ -1,10 +1,9 @@
 # Ansible Kubernetes CKS Practice Cluster for Mac
 
-Ansible provisioning for the **CKS practice cluster** running on Multipass VMs
-(Mac / Apple Silicon). It reproduces the existing, hand-built setup: a kubeadm
-cluster with one control plane (`cp1`) + one worker (`worker1`), Cilium as the CNI,
-and the CKS toolset (Gatekeeper, Kyverno, ingress-nginx, NGINX Gateway Fabric,
-Falco, kube-bench, gVisor).
+Ansible provisioning for a **CKS practice cluster** running on Multipass VMs
+(Mac / Apple Silicon). A kubeadm cluster with one control plane (`cp1`) + one 
+worker (`worker1`), Cilium as the CNI, and the CKS toolset (Gatekeeper, Kyverno, 
+ingress-nginx, NGINX Gateway Fabric, Falco, kube-bench, gVisor).
 
 ## What it deploys
 
