@@ -34,6 +34,14 @@ Pod CIDR `10.244.0.0/16`, service CIDR `10.96.0.0/12`. All binary downloads use 
 make deps          # Ansible collections (kubernetes.core, community.general, ansible.posix)
 ```
 
+### Multipass VM recommendations
+```bash
+local.cp1.memory = 4GiB
+local.cp1.disk = 18GiB
+local.worker1.memory = 4GiB
+local.worker1.disk = 15GiB
+```
+
 ## Fresh cluster from scratch
 
 ```bash
