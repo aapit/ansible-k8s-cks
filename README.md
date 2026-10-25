@@ -36,10 +36,10 @@ make deps          # Ansible collections (kubernetes.core, community.general, an
 
 ### Multipass VM recommendations
 ```bash
-local.cp1.memory = 4GiB
-local.cp1.disk = 18GiB
-local.worker1.memory = 4GiB
-local.worker1.disk = 15GiB
+local.cp1.memory        = 4GiB
+local.cp1.disk          = 18GiB
+local.worker1.memory    = 4GiB
+local.worker1.disk      = 15GiB
 ```
 
 ## Fresh cluster from scratch
